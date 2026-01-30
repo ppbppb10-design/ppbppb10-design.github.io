@@ -92,12 +92,12 @@
       <h2>📝 休假申請</h2>
 
       <form
-        action="https://docs.google.com/forms/u/0/d/1x4_Qp6DXdyMEwoq8cFZCSFM9XrEtUgbl3UoLKRqamb8/formResponse"
+  action="https://docs.google.com/forms/u/0/d/1x4_Qp6DXdyMEwoq8cFZCSFM9XrEtUgbl3UoLKRqamb8/formResponse"
+  method="POST"
+  target="hidden_iframe"
+  onsubmit="submitted=true; alert('已送出休假申請！');"
+>
 
-        method="POST"
-        target="_self"
-        onsubmit="alert('已送出休假申請！');"
-      >
         <label>姓名</label>
         <input type="text" name="entry.1976827451" required />
 
@@ -199,6 +199,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
+<iframe name="hidden_iframe" style="display:none;"></iframe>
 
 
 </body>
