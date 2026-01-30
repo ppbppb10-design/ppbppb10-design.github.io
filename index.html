@@ -137,67 +137,69 @@
 
   </div>
   <script>
-  document.addEventListener('DOMContentLoaded', function () {
-   const calendar = new FullCalendar.Calendar(calendarEl, {
-  initialView: 'dayGridMonth',
-  headerToolbar: {
-    left: 'prev,next today',
-    center: 'title',
-    right: 'dayGridMonth,listMonth'
-  },
-  eventDidMount: function(info) {
-    const date = info.event.startStr;
-    const sameDay = info.view.calendar.getEvents()
-      .filter(e => e.startStr === date);
+document.addEventListener('DOMContentLoaded', function () {
+  const calendarEl = document.getElementById('calendar');
 
-    if (sameDay.length >= 3) {
-      info.el.style.border = '2px solid red';
-    }
-  }, // ⭐⭐⭐ 就是這個逗號！
+  fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pub?output=csv')
+    .then(res => res.text())
+    .then(csv => {
+      const lines = csv.split('\n').slice(1);
+      const events = [];
 
-  locale: 'zh-tw',
-  height: 'auto',
-  events: events,
-  eventClick: function (info) {
-    if (info.event.extendedProps.note) {
-      alert('備註：' + info.event.extendedProps.note);
-    }
-  }
-});
+      lines.forEach(line => {
+        const cols = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+        if (!cols || cols.length < 4) return;
 
+        const clean = v => v.replace(/^"|"$/g, '').trim();
 
+        const name = clean(cols[1]);
+        const date = clean(cols[2]);
+        const type = clean(cols[3]);
+        const note = cols[4] ? clean(cols[4]) : '';
 
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-          initialView: 'dayGridMonth',
-          headerToolbar: {
-  left: 'prev,next today',
-  center: 'title',
-  right: 'dayGridMonth,listMonth'
-},
-eventDidMount: function(info) {
-  const date = info.event.startStr;
-  const sameDay = info.view.calendar.getEvents()
-    .filter(e => e.startStr === date);
+        let color = '#6366f1';
+        if (type.includes('特休')) color = '#22c55e';
+        if (type.includes('事假')) color = '#f59e0b';
+        if (type.includes('病假')) color = '#ef4444';
 
-  if (sameDay.length >= 3) {
-    info.el.style.border = '2px solid red';
-  }
-}
-
-          locale: 'zh-tw',
-          height: 'auto',
-          events: events,
-          eventClick: function (info) {
-            if (info.event.extendedProps.note) {
-              alert('備註：' + info.event.extendedProps.note);        
-            }
-          }
+        events.push({
+          title: `${name}（${type}）`,
+          start: date,
+          allDay: true,
+          color,
+          extendedProps: { note }
         });
-
-        calendar.render();
       });
-  });
+
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'zh-tw',
+        height: 'auto',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,listMonth'
+        },
+        events,
+        eventDidMount(info) {
+          const sameDay = calendar.getEvents()
+            .filter(e => e.startStr === info.event.startStr);
+          if (sameDay.length >= 3) {
+            info.el.style.border = '2px solid red';
+          }
+        },
+        eventClick(info) {
+          if (info.event.extendedProps.note) {
+            alert('備註：' + info.event.extendedProps.note);
+          }
+        }
+      });
+
+      calendar.render();
+    });
+});
 </script>
+
 
 </body>
 </html>
