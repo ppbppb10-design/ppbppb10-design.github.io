@@ -2,84 +2,22 @@
 <html lang="zh-TW">
 <head>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
   <meta charset="UTF-8" />
   <title>休假登記系統</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
-    body {
-      font-family: "Noto Sans TC", Arial, sans-serif;
-      background: #f4f6f8;
-      margin: 0;
-      padding: 20px;
-    }
-
-    h1, h2 {
-      text-align: center;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: auto;
-    }
-
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 30px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-    }
-
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
-    }
-
-    input, select, textarea, button {
-      width: 100%;
-      margin-top: 6px;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-
-    textarea {
-      resize: vertical;
-    }
-
-    button {
-      background: #4f46e5;
-      color: white;
-      border: none;
-      margin-top: 20px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #4338ca;
-    }
-
-    iframe {
-      width: 100%;
-      height: 500px;
-      border: none;
-      border-radius: 8px;
-    }
-
-    .calendar-placeholder {
-      height: 300px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #666;
-      background: #fafafa;
-      border: 2px dashed #ccc;
-      border-radius: 10px;
-    }
+    body { font-family: "Noto Sans TC", Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
+    h1, h2 { text-align: center; }
+    .container { max-width: 900px; margin: auto; }
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    input, select, textarea, button { width: 100%; margin-top: 6px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; }
+    textarea { resize: vertical; }
+    button { background: #4f46e5; color: white; border: none; margin-top: 20px; cursor: pointer; }
+    button:hover { background: #4338ca; }
+    iframe { width: 100%; height: 500px; border: none; border-radius: 8px; }
   </style>
 </head>
 
@@ -90,21 +28,16 @@
     <!-- 休假登記 -->
     <div class="card">
       <h2>📝 休假申請</h2>
-
       <form
-  action="https://docs.google.com/forms/u/0/d/1x4_Qp6DXdyMEwoq8cFZCSFM9XrEtUgbl3UoLKRqamb8/formResponse"
-  method="POST"
-  target="hidden_iframe"
-  onsubmit="alert('已送出休假申請！');"
->
-
-
+        id="leaveForm"
+        action="https://docs.google.com/forms/u/0/d/1x4_Qp6DXdyMEwoq8cFZCSFM9XrEtUgbl3UoLKRqamb8/formResponse"
+        method="POST"
+        target="hidden_iframe"
+      >
         <label>姓名</label>
         <input type="text" name="entry.1976827451" required />
-
         <label>休假日期</label>
         <input type="date" name="entry.1083401554" required />
-
         <label>假別</label>
         <select name="entry.1551710315" required>
           <option value="">請選擇</option>
@@ -113,10 +46,8 @@
           <option value="病假">病假</option>
           <option value="其他">其他</option>
         </select>
-
         <label>備註</label>
         <textarea name="entry.2071643667" rows="3"></textarea>
-
         <button type="submit">📤 提交休假</button>
       </form>
     </div>
@@ -124,101 +55,86 @@
     <!-- 已登記清單 -->
     <div class="card">
       <h2>📋 目前已登記休假清單</h2>
-      <iframe
-        src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pubhtml">
-      </iframe>
+      <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pubhtml"></iframe>
     </div>
 
     <!-- 月曆 -->
     <div class="card">
       <h2>🗓️ 休假月曆</h2>
-     <div id="calendar"></div>
-
+      <div id="calendar"></div>
     </div>
-
   </div>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const calendarEl = document.getElementById('calendar');
 
-  async function loadEvents() {
-    const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pub?output=csv');
-    const csv = await res.text();
+  <iframe name="hidden_iframe" style="display:none;"></iframe>
 
-    const rows = csv.split('\n').map(r =>
-      r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '').trim())
-    );
+  <script>
+    document.addEventListener('DOMContentLoaded', async function () {
+      const calendarEl = document.getElementById('calendar');
+      let calendar;
 
-    const header = rows[0];
-    const dataRows = rows.slice(1);
-    const events = [];
+      async function loadEvents() {
+        const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pub?output=csv');
+        const csv = await res.text();
+        const rows = csv.split('\n').map(r =>
+          r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '').trim())
+        );
+        if (!rows.length) return [];
+        const header = rows[0];
+        const dataRows = rows.slice(1);
+        const events = [];
 
-    const idxName = header.indexOf('姓名');
-    const idxDate = header.indexOf('休假日期');
-    const idxType = header.indexOf('假別');
-    const idxNote = header.indexOf('備註');
+        const idxName = header.indexOf('姓名');
+        const idxDate = header.indexOf('休假日期');
+        const idxType = header.indexOf('假別');
+        const idxNote = header.indexOf('備註');
 
-    dataRows.forEach(r => {
-      if (!r || !r[idxDate]) return;
+        dataRows.forEach(r => {
+          if (!r || !r[idxDate]) return;
+          const name = r[idxName];
+          const dateStr = r[idxDate];
+          const type = r[idxType];
+          const note = r[idxNote] || '';
 
-      const name = r[idxName];
-      let date = r[idxDate];
-      const type = r[idxType];
-      const note = r[idxNote] || '';
+          let d = new Date(dateStr);
+          if (isNaN(d)) return;
+          const isoDate = d.toISOString().split('T')[0];
 
-      // 轉成 YYYY-MM-DD 格式
-      const d = new Date(date);
-      if (isNaN(d)) return; // 無效日期跳過
-      const isoDate = d.toISOString().split('T')[0];
+          let color = '#6366f1';
+          if (type?.includes('特休')) color = '#22c55e';
+          if (type?.includes('事假')) color = '#f59e0b';
+          if (type?.includes('病假')) color = '#ef4444';
 
-      let color = '#6366f1';
-      if (type?.includes('特休')) color = '#22c55e';
-      if (type?.includes('事假')) color = '#f59e0b';
-      if (type?.includes('病假')) color = '#ef4444';
+          events.push({ title: `${name}（${type}）`, start: isoDate, allDay: true, color, extendedProps: { note } });
+        });
 
-      events.push({
-        title: `${name}（${type}）`,
-        start: isoDate,
-        allDay: true,
-        color,
-        extendedProps: { note }
+        return events;
+      }
+
+      async function initCalendar() {
+        const events = await loadEvents();
+        calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: 'dayGridMonth',
+          locale: 'zh-tw',
+          height: 'auto',
+          headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
+          events,
+          eventClick(info) { if (info.event.extendedProps.note) alert('備註：' + info.event.extendedProps.note); }
+        });
+        calendar.render();
+      }
+
+      await initCalendar();
+
+      // 表單送出後刷新月曆
+      document.getElementById('leaveForm').addEventListener('submit', () => {
+        setTimeout(async () => {
+          const newEvents = await loadEvents();
+          calendar.removeAllEvents();
+          calendar.addEventSource(newEvents);
+        }, 1500); // 等 Google Forms 寫入完成
       });
     });
-
-    return events;
-  }
-
-  async function initCalendar() {
-    const events = await loadEvents();
-
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      locale: 'zh-tw',
-      height: 'auto',
-      headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,listMonth'
-      },
-      events,
-      eventClick(info) {
-        if (info.event.extendedProps.note) {
-          alert('備註：' + info.event.extendedProps.note);
-        }
-      }
-    });
-
-    calendar.render();
-  }
-
-  initCalendar();
-});
-</script>
-
-
-<iframe name="hidden_iframe" style="display:none;"></iframe>
-
-
+  </script>
 </body>
 </html>
 
