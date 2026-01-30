@@ -3,37 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <title>休假登記系統</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
   <style>
-    body { font-family: "Noto Sans TC", Arial, sans-serif; background: #f4f6f8; margin:0; padding:20px;}
-    h1,h2 { text-align:center; }
-    .container { max-width:900px; margin:auto; }
+    body { font-family: "Noto Sans TC", Arial, sans-serif; background:#f4f6f8; margin:0; padding:20px;}
+    .container { max-width:900px; margin:auto;}
     .card { background:white; border-radius:12px; padding:20px; margin-bottom:30px; box-shadow:0 4px 10px rgba(0,0,0,0.08);}
-    label { display:block; margin-top:15px; font-weight:bold; }
+    label { display:block; margin-top:15px; font-weight:bold;}
     input, select, textarea, button { width:100%; margin-top:6px; padding:10px; border-radius:8px; border:1px solid #ccc; font-size:16px;}
-    textarea { resize: vertical; }
     button { background:#4f46e5; color:white; border:none; margin-top:20px; cursor:pointer;}
-    button:hover { background:#4338ca; }
-    iframe { width:100%; height:500px; border:none; border-radius:8px;}
+    button:hover { background:#4338ca;}
+    #calendar { height:500px; border-radius:8px; }
   </style>
 </head>
 <body>
 <div class="container">
   <h1>📅 休假登記系統</h1>
 
-  <!-- 休假申請 -->
   <div class="card">
     <h2>📝 休假申請</h2>
-    <form id="leaveForm" action="https://docs.google.com/forms/u/0/d/1x4_Qp6DXdyMEwoq8cFZCSFM9XrEtUgbl3UoLKRqamb8/formResponse" 
-          method="POST" target="hidden_iframe">
+    <form id="leaveForm" target="hidden_iframe" method="POST"
+      action="https://docs.google.com/forms/u/0/d/1x4_Qp6DXdyMEwoq8cFZCSFM9XrEtUgbl3UoLKRqamb8/formResponse">
+
       <label>姓名</label>
       <input type="text" name="entry.1976827451" required>
+
       <label>休假開始日</label>
-      <input type="date" name="entry.1083401554_start" required>
+      <input type="date" id="start_date" required>
+
       <label>休假結束日</label>
-      <input type="date" name="entry.1083401554_end" required>
+      <input type="date" id="end_date" required>
+
       <label>假別</label>
       <select name="entry.1551710315" required>
         <option value="">請選擇</option>
@@ -42,19 +42,23 @@
         <option value="病假">病假</option>
         <option value="其他">其他</option>
       </select>
+
       <label>備註</label>
       <textarea name="entry.2071643667" rows="3"></textarea>
+
+      <!-- hidden inputs for Google Form date fields -->
+      <input type="hidden" name="entry.1083401554_year" id="start_year">
+      <input type="hidden" name="entry.1083401554_month" id="start_month">
+      <input type="hidden" name="entry.1083401554_day" id="start_day">
+
+      <input type="hidden" name="entry.678899297_year" id="end_year">
+      <input type="hidden" name="entry.678899297_month" id="end_month">
+      <input type="hidden" name="entry.678899297_day" id="end_day">
+
       <button type="submit">📤 提交休假</button>
     </form>
   </div>
 
-  <!-- 已登記清單 -->
-  <div class="card">
-    <h2>📋 目前已登記休假清單</h2>
-    <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pubhtml"></iframe>
-  </div>
-
-  <!-- 月曆 -->
   <div class="card">
     <h2>🗓️ 休假月曆</h2>
     <div id="calendar"></div>
@@ -64,71 +68,81 @@
 <iframe name="hidden_iframe" style="display:none;"></iframe>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  const calendarEl = document.getElementById('calendar');
+const form = document.getElementById('leaveForm');
+const startInput = document.getElementById('start_date');
+const endInput = document.getElementById('end_date');
 
-  async function loadEvents() {
-    const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pub?output=csv');
-    const csv = await res.text();
-
-    const rows = csv.split('\n').map(r => r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g,'').trim()));
-    const header = rows[0];
-    const dataRows = rows.slice(1);
-    const events = [];
-
-    const idxName = header.indexOf('姓名');
-    const idxStart = header.indexOf('休假開始日');
-    const idxEnd = header.indexOf('休假結束日');
-    const idxType = header.indexOf('假別');
-    const idxNote = header.indexOf('備註');
-
-    dataRows.forEach(r => {
-      if(!r || !r[idxStart] || !r[idxEnd]) return;
-      const name = r[idxName];
-      const start = new Date(r[idxStart]);
-      const end = new Date(r[idxEnd]);
-      const type = r[idxType];
-      const note = r[idxNote] || '';
-
-      let color='#6366f1';
-      if(type?.includes('特休')) color='#22c55e';
-      if(type?.includes('事假')) color='#f59e0b';
-      if(type?.includes('病假')) color='#ef4444';
-
-      // 產生區間事件
-      for(let d = new Date(start); d <= end; d.setDate(d.getDate()+1)){
-        const iso = d.toISOString().split('T')[0];
-        events.push({ title:`${name}（${type}）`, start: iso, allDay:true, color, extendedProps:{note} });
-      }
-    });
-
-    return events;
+function fillHiddenDates(){
+  if(startInput.value){
+    const d = new Date(startInput.value);
+    document.getElementById('start_year').value = d.getFullYear();
+    document.getElementById('start_month').value = d.getMonth()+1;
+    document.getElementById('start_day').value = d.getDate();
   }
-
-  async function initCalendar() {
-    const events = await loadEvents();
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      locale:'zh-tw',
-      height:'auto',
-      headerToolbar:{ left:'prev,next today', center:'title', right:'dayGridMonth,listMonth' },
-      events,
-      eventClick(info){
-        if(info.event.extendedProps.note){
-          alert('備註：'+info.event.extendedProps.note);
-        }
-      }
-    });
-    calendar.render();
+  if(endInput.value){
+    const d = new Date(endInput.value);
+    document.getElementById('end_year').value = d.getFullYear();
+    document.getElementById('end_month').value = d.getMonth()+1;
+    document.getElementById('end_day').value = d.getDate();
   }
+}
 
-  initCalendar();
+startInput.addEventListener('change', fillHiddenDates);
+endInput.addEventListener('change', fillHiddenDates);
 
-  // 送出表單後重新刷新月曆
-  const form = document.getElementById('leaveForm');
-  form.addEventListener('submit', async (e)=>{
-    setTimeout(initCalendar, 2000); // 等 Google Sheet 更新後再刷新
+// 月曆
+async function loadEvents(){
+  const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pub?output=csv');
+  const csv = await res.text();
+  const rows = csv.split('\n').map(r => r.split(',').map(c=>c.replace(/^"|"$/g,'')));
+  const header = rows[0];
+  const data = rows.slice(1);
+  const events = [];
+  const idxName = header.indexOf('姓名');
+  const idxStart = header.indexOf('休假日期'); // 如果你的 Sheet 有拆 start/end 可以改
+  const idxEnd = header.indexOf('休假結束日');
+  const idxType = header.indexOf('假別');
+  const idxNote = header.indexOf('備註');
+
+  data.forEach(r=>{
+    if(!r || !r[idxStart]) return;
+    let start = r[idxStart];
+    let end = r[idxEnd] || start;
+    events.push({
+      title:`${r[idxName]}（${r[idxType]}）`,
+      start,
+      end,
+      allDay:true,
+      extendedProps:{note:r[idxNote] || ''}
+    });
   });
+  return events;
+}
+
+let calendar;
+async function initCalendar(){
+  const events = await loadEvents();
+  const calendarEl = document.getElementById('calendar');
+  calendar = new FullCalendar.Calendar(calendarEl,{
+    initialView:'dayGridMonth',
+    locale:'zh-tw',
+    height:'auto',
+    headerToolbar:{left:'prev,next today',center:'title',right:'dayGridMonth,listMonth'},
+    events,
+    eventClick(info){
+      if(info.event.extendedProps.note) alert('備註：'+info.event.extendedProps.note);
+    }
+  });
+  calendar.render();
+}
+
+initCalendar();
+
+// 表單送出後
+form.addEventListener('submit', e=>{
+  fillHiddenDates();
+  alert('已送出休假申請！');
+  setTimeout(initCalendar, 5000); // 等 Sheet 更新後刷新月曆
 });
 </script>
 </body>
