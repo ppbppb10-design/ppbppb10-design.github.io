@@ -95,8 +95,9 @@
   action="https://docs.google.com/forms/u/0/d/1x4_Qp6DXdyMEwoq8cFZCSFM9XrEtUgbl3UoLKRqamb8/formResponse"
   method="POST"
   target="hidden_iframe"
-  onsubmit="submitted=true; alert('已送出休假申請！');"
+  onsubmit="alert('已送出休假申請！');"
 >
+
 
         <label>姓名</label>
         <input type="text" name="entry.1976827451" required />
@@ -136,31 +137,40 @@
     </div>
 
   </div>
-  <script>
+<script>
 document.addEventListener('DOMContentLoaded', function () {
   const calendarEl = document.getElementById('calendar');
 
   fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pub?output=csv')
     .then(res => res.text())
     .then(csv => {
-      const lines = csv.split('\n').slice(1);
+      const rows = csv.split('\n').map(r =>
+        r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g)
+          ?.map(v => v.replace(/^"|"$/g, '').trim())
+      );
+
+      const header = rows[0];
+      const dataRows = rows.slice(1);
       const events = [];
 
-      lines.forEach(line => {
-        const cols = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-        if (!cols || cols.length < 4) return;
+      // 自動找欄位 index
+      const idxName = header.indexOf('姓名');
+      const idxDate = header.indexOf('休假日期');
+      const idxType = header.indexOf('假別');
+      const idxNote = header.indexOf('備註');
 
-        const clean = v => v.replace(/^"|"$/g, '').trim();
+      dataRows.forEach(r => {
+        if (!r || !r[idxDate]) return;
 
-        const name = clean(cols[1]);
-        const date = clean(cols[2]);
-        const type = clean(cols[3]);
-        const note = cols[4] ? clean(cols[4]) : '';
+        const name = r[idxName];
+        const date = r[idxDate];
+        const type = r[idxType];
+        const note = r[idxNote] || '';
 
         let color = '#6366f1';
-        if (type.includes('特休')) color = '#22c55e';
-        if (type.includes('事假')) color = '#f59e0b';
-        if (type.includes('病假')) color = '#ef4444';
+        if (type?.includes('特休')) color = '#22c55e';
+        if (type?.includes('事假')) color = '#f59e0b';
+        if (type?.includes('病假')) color = '#ef4444';
 
         events.push({
           title: `${name}（${type}）`,
@@ -181,13 +191,6 @@ document.addEventListener('DOMContentLoaded', function () {
           right: 'dayGridMonth,listMonth'
         },
         events,
-        eventDidMount(info) {
-          const sameDay = calendar.getEvents()
-            .filter(e => e.startStr === info.event.startStr);
-          if (sameDay.length >= 3) {
-            info.el.style.border = '2px solid red';
-          }
-        },
         eventClick(info) {
           if (info.event.extendedProps.note) {
             alert('備註：' + info.event.extendedProps.note);
@@ -199,6 +202,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
+
 <iframe name="hidden_iframe" style="display:none;"></iframe>
 
 
