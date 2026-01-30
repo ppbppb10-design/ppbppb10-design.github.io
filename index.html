@@ -141,67 +141,80 @@
 document.addEventListener('DOMContentLoaded', function () {
   const calendarEl = document.getElementById('calendar');
 
-  fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pub?output=csv')
-    .then(res => res.text())
-    .then(csv => {
-      const rows = csv.split('\n').map(r =>
-        r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g)
-          ?.map(v => v.replace(/^"|"$/g, '').trim())
-      );
+  async function loadEvents() {
+    const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pub?output=csv');
+    const csv = await res.text();
 
-      const header = rows[0];
-      const dataRows = rows.slice(1);
-      const events = [];
+    const rows = csv.split('\n').map(r =>
+      r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '').trim())
+    );
 
-      // 自動找欄位 index
-      const idxName = header.indexOf('姓名');
-      const idxDate = header.indexOf('休假日期');
-      const idxType = header.indexOf('假別');
-      const idxNote = header.indexOf('備註');
+    const header = rows[0];
+    const dataRows = rows.slice(1);
+    const events = [];
 
-      dataRows.forEach(r => {
-        if (!r || !r[idxDate]) return;
+    const idxName = header.indexOf('姓名');
+    const idxDate = header.indexOf('休假日期');
+    const idxType = header.indexOf('假別');
+    const idxNote = header.indexOf('備註');
 
-        const name = r[idxName];
-        const date = r[idxDate];
-        const type = r[idxType];
-        const note = r[idxNote] || '';
+    dataRows.forEach(r => {
+      if (!r || !r[idxDate]) return;
 
-        let color = '#6366f1';
-        if (type?.includes('特休')) color = '#22c55e';
-        if (type?.includes('事假')) color = '#f59e0b';
-        if (type?.includes('病假')) color = '#ef4444';
+      const name = r[idxName];
+      let date = r[idxDate];
+      const type = r[idxType];
+      const note = r[idxNote] || '';
 
-        events.push({
-          title: `${name}（${type}）`,
-          start: date,
-          allDay: true,
-          color,
-          extendedProps: { note }
-        });
+      // 轉成 YYYY-MM-DD 格式
+      const d = new Date(date);
+      if (isNaN(d)) return; // 無效日期跳過
+      const isoDate = d.toISOString().split('T')[0];
+
+      let color = '#6366f1';
+      if (type?.includes('特休')) color = '#22c55e';
+      if (type?.includes('事假')) color = '#f59e0b';
+      if (type?.includes('病假')) color = '#ef4444';
+
+      events.push({
+        title: `${name}（${type}）`,
+        start: isoDate,
+        allDay: true,
+        color,
+        extendedProps: { note }
       });
-
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        locale: 'zh-tw',
-        height: 'auto',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,listMonth'
-        },
-        events,
-        eventClick(info) {
-          if (info.event.extendedProps.note) {
-            alert('備註：' + info.event.extendedProps.note);
-          }
-        }
-      });
-
-      calendar.render();
     });
+
+    return events;
+  }
+
+  async function initCalendar() {
+    const events = await loadEvents();
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      locale: 'zh-tw',
+      height: 'auto',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,listMonth'
+      },
+      events,
+      eventClick(info) {
+        if (info.event.extendedProps.note) {
+          alert('備註：' + info.event.extendedProps.note);
+        }
+      }
+    });
+
+    calendar.render();
+  }
+
+  initCalendar();
 });
 </script>
+
 
 <iframe name="hidden_iframe" style="display:none;"></iframe>
 
