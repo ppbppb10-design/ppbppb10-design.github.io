@@ -1,23 +1,22 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+  <meta charset="UTF-8">
+  <title>休假登記系統</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-  <meta charset="UTF-8" />
-  <title>休假登記系統</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <style>
-    body { font-family: "Noto Sans TC", Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
-    h1, h2 { text-align: center; }
-    .container { max-width: 900px; margin: auto; }
-    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-    label { display: block; margin-top: 15px; font-weight: bold; }
-    input, select, textarea, button { width: 100%; margin-top: 6px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; }
-    textarea { resize: vertical; }
-    button { background: #4f46e5; color: white; border: none; margin-top: 20px; cursor: pointer; }
-    button:hover { background: #4338ca; }
-    iframe { width: 100%; height: 500px; border: none; border-radius: 8px; }
+    body { font-family: "Noto Sans TC", Arial, sans-serif; background: #f4f6f8; margin:0; padding:20px;}
+    h1,h2{text-align:center;}
+    .container{max-width:900px;margin:auto;}
+    .card{background:white;border-radius:12px;padding:20px;margin-bottom:30px;box-shadow:0 4px 10px rgba(0,0,0,0.08);}
+    label{display:block;margin-top:15px;font-weight:bold;}
+    input,select,textarea,button{width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:16px;}
+    textarea{resize:vertical;}
+    button{background:#4f46e5;color:white;border:none;margin-top:20px;cursor:pointer;}
+    button:hover{background:#4338ca;}
+    iframe{width:100%;height:500px;border:none;border-radius:8px;}
   </style>
 </head>
 <body>
@@ -27,16 +26,13 @@
     <!-- 休假申請 -->
     <div class="card">
       <h2>📝 休假申請</h2>
-      <form id="leaveForm">
+      <form action="https://docs.google.com/forms/u/0/d/1x4_Qp6DXdyMEwoq8cFZCSFM9XrEtUgbl3UoLKRqamb8/formResponse" method="POST" target="hidden_iframe" onsubmit="alert('已送出休假申請！');">
         <label>姓名</label>
         <input type="text" name="entry.1976827451" required>
-
         <label>休假開始日</label>
         <input type="date" name="entry.1083401554" required>
-
         <label>休假結束日</label>
         <input type="date" name="entry.678899297" required>
-
         <label>假別</label>
         <select name="entry.1551710315" required>
           <option value="">請選擇</option>
@@ -45,10 +41,8 @@
           <option value="病假">病假</option>
           <option value="其他">其他</option>
         </select>
-
         <label>備註</label>
         <textarea name="entry.2071643667" rows="3"></textarea>
-
         <button type="submit">📤 提交休假</button>
       </form>
     </div>
@@ -71,101 +65,72 @@
   <script>
   document.addEventListener('DOMContentLoaded', function () {
     const calendarEl = document.getElementById('calendar');
-    let calendar;
 
     async function loadEvents() {
-      try {
-        const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pub?output=csv');
-        const csv = await res.text();
+      const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pub?output=csv');
+      const csv = await res.text();
 
-        const rows = csv.split('\n').map(r =>
-          r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '').trim())
-        );
+      const rows = csv.split('\n').map(r =>
+        r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g,'').trim())
+      );
 
-        const header = rows[0];
-        const dataRows = rows.slice(1);
-        const events = [];
+      const header = rows[0];
+      const dataRows = rows.slice(1);
+      const events = [];
 
-        const idxName = header.indexOf('姓名');
-        const idxStart = header.indexOf('休假開始日');
-        const idxEnd = header.indexOf('休假結束日');
-        const idxType = header.indexOf('假別');
-        const idxNote = header.indexOf('備註');
+      const idxName = header.indexOf('姓名');
+      const idxStart = header.indexOf('休假日期'); // 這裡可改成開始日期欄位
+      const idxEnd = header.indexOf('休假結束日');
+      const idxType = header.indexOf('假別');
+      const idxNote = header.indexOf('備註');
 
-        dataRows.forEach(r => {
-          if (!r || !r[idxStart]) return;
-          const name = r[idxName];
-          const type = r[idxType] || '';
-          const note = r[idxNote] || '';
+      dataRows.forEach(r => {
+        if(!r || !r[idxStart]) return;
+        const name = r[idxName];
+        const type = r[idxType] || '';
+        const note = r[idxNote] || '';
 
-          const startDate = new Date(r[idxStart]);
-          const endDate = new Date(r[idxEnd] || r[idxStart]);
+        const startDate = new Date(r[idxStart]);
+        const endDate = new Date(r[idxEnd] || r[idxStart]);
 
-          for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate()+1)) {
-            let color = '#6366f1';
-            if (type.includes('特休')) color = '#22c55e';
-            else if (type.includes('事假')) color = '#f59e0b';
-            else if (type.includes('病假')) color = '#ef4444';
+        for(let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+          let color = '#6366f1';
+          if(type.includes('特休')) color = '#22c55e';
+          else if(type.includes('事假')) color = '#f59e0b';
+          else if(type.includes('病假')) color = '#ef4444';
 
-            events.push({
-              title: `${name}（${type}）`,
-              start: d.toISOString().split('T')[0],
-              allDay: true,
-              color,
-              extendedProps: { note }
-            });
-          }
-        });
-        return events;
-      } catch(e) {
-        console.error('載入事件失敗', e);
-        return [];
-      }
+          const eventDate = new Date(d);
+          events.push({
+            title: `${name}（${type}）`,
+            start: eventDate.toISOString().split('T')[0],
+            allDay:true,
+            color,
+            extendedProps: {note}
+          });
+        }
+      });
+
+      return events;
     }
 
     async function initCalendar() {
       const events = await loadEvents();
-      calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        locale: 'zh-tw',
-        height: 'auto',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,listMonth'
-        },
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView:'dayGridMonth',
+        locale:'zh-tw',
+        height:'auto',
+        headerToolbar: {left:'prev,next today',center:'title',right:'dayGridMonth,listMonth'},
         events,
-        eventClick(info) {
-          if (info.event.extendedProps.note) alert('備註：' + info.event.extendedProps.note);
+        eventClick(info){
+          if(info.event.extendedProps.note){
+            alert('備註：'+info.event.extendedProps.note);
+          }
         }
       });
       calendar.render();
     }
 
     initCalendar();
-
-    // 表單送出
-    const form = document.getElementById('leaveForm');
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const formData = new FormData(form);
-      const action = 'https://docs.google.com/forms/u/0/d/1x4_Qp6DXdyMEwoq8cFZCSFM9XrEtUgbl3UoLKRqamb8/formResponse';
-      const params = new URLSearchParams(formData).toString();
-
-      fetch(action, { method: 'POST', body: params, mode: 'no-cors' })
-        .then(() => {
-          alert('已送出休假申請！');
-          form.reset();
-          setTimeout(() => {
-            // 重新抓 CSV 更新月曆
-            loadEvents().then(events => {
-              calendar.removeAllEvents();
-              calendar.addEventSource(events);
-            });
-          }, 2000); // 給 Google Sheet 更新時間
-        });
-    });
   });
   </script>
 </body>
