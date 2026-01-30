@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<meta charset="UTF-8">
   <title>休假登記系統</title>
   <style>
     body {
@@ -76,6 +78,9 @@ function showMessage() {
 <hr>
 
 <h2>📅 目前已登記休假清單</h2>
+<hr>
+<h2>📅 休假月曆</h2>
+<div id="calendar"></div>
 
 <iframe
   src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pubhtml?widget=true&headers=false"
@@ -85,3 +90,45 @@ function showMessage() {
 
 </body>
 </html>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  const calendarEl = document.getElementById('calendar');
+
+  fetch(
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pub?output=csv'
+  )
+  .then(res => res.text())
+  .then(csv => {
+    const rows = csv.split('\n').slice(1); // 去掉標題列
+    const events = [];
+
+    rows.forEach(row => {
+      const cols = row.split(',');
+
+      const name = cols[1];
+      const date = cols[2];
+      const type = cols[3];
+
+      if (date) {
+        events.push({
+          title: `${name}（${type}）`,
+          start: date,
+          allDay: true
+        });
+      }
+    });
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      locale: 'zh-tw',
+      height: 'auto',
+      events: events
+    });
+
+    calendar.render();
+  });
+
+});
+</script>
+
