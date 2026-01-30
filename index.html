@@ -2,22 +2,81 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>休假登記表</title>
+  <title>休假登記系統</title>
+  <style>
+    body {
+      font-family: Arial, "微軟正黑體", sans-serif;
+      max-width: 600px;
+      margin: auto;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 6px;
+    }
+    button {
+      background: #2c7be5;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1a5fc4;
+    }
+  </style>
 </head>
 <body>
-  <h2>休假日期填寫</h2>
 
-  <form action="🔴這裡之後會換成 Google 表單網址" method="POST">
-    <label>姓名：</label><br>
-    <input type="text" name="name" required><br><br>
+<h2>📝 休假登記</h2>
 
-    <label>休假日期：</label><br>
-    <input type="date" name="date" required><br><br>
+<form
+  action="https://docs.google.com/forms/d/e/1x4_Qp6DXdyMEwoq8cFZCSFM9XrEtUgbl3UoLKRqamb8/formResponse"
+  method="POST"
+  target="hidden_iframe"
+  onsubmit="submitted=true;"
+>
 
-    <label>備註：</label><br>
-    <textarea name="note"></textarea><br><br>
+  <label>姓名</label>
+  <input type="text" name="entry.1976827451" required>
 
-    <button type="submit">送出</button>
-  </form>
+  <label>休假日期</label>
+  <input type="date" name="entry.1083401554" required>
+
+  <label>假別</label>
+  <select name="entry.1551710315">
+    <option value="特休">特休</option>
+    <option value="事假">事假</option>
+    <option value="病假">病假</option>
+    <option value="其他">其他</option>
+  </select>
+
+  <label>備註</label>
+  <textarea name="entry.2071643667"></textarea>
+
+  <br><br>
+  <button type="submit">送出</button>
+</form>
+
+<iframe name="hidden_iframe" style="display:none;"></iframe>
+
+<p id="msg" style="color:green;"></p>
+
+<script>
+let submitted = false;
+document.querySelector("form").onsubmit = () => {
+  document.getElementById("msg").innerText = "✅ 已送出，謝謝！";
+};
+</script>
+
+<hr>
+
+<h2>📅 已登記休假清單</h2>
+
+<iframe
+  src="https://docs.google.com/spreadsheets/d/【你的試算表ID】/pubhtml?widget=true&headers=false"
+  width="100%"
+  height="400">
+</iframe>
+
 </body>
 </html>
