@@ -26,13 +26,21 @@
     <!-- 休假申請 -->
     <div class="card">
       <h2>📝 休假申請</h2>
-      <form action="https://docs.google.com/forms/u/0/d/1x4_Qp6DXdyMEwoq8cFZCSFM9XrEtUgbl3UoLKRqamb8/formResponse" method="POST" target="hidden_iframe" onsubmit="alert('已送出休假申請！');">
+      <form 
+        action="https://docs.google.com/forms/u/0/d/1x4_Qp6DXdyMEwoq8cFZCSFM9XrEtUgbl3UoLKRqamb8/formResponse" 
+        method="POST" 
+        target="hidden_iframe" 
+        onsubmit="alert('已送出休假申請！'); setTimeout(() => window.initCalendar(), 500);"
+      >
         <label>姓名</label>
         <input type="text" name="entry.1976827451" required>
+        
         <label>休假開始日</label>
         <input type="date" name="entry.1083401554" required>
+        
         <label>休假結束日</label>
         <input type="date" name="entry.678899297" required>
+        
         <label>假別</label>
         <select name="entry.1551710315" required>
           <option value="">請選擇</option>
@@ -41,8 +49,10 @@
           <option value="病假">病假</option>
           <option value="其他">其他</option>
         </select>
+        
         <label>備註</label>
         <textarea name="entry.2071643667" rows="3"></textarea>
+        
         <button type="submit">📤 提交休假</button>
       </form>
     </div>
@@ -63,75 +73,76 @@
   <iframe name="hidden_iframe" style="display:none;"></iframe>
 
   <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const calendarEl = document.getElementById('calendar');
+  const calendarEl = document.getElementById('calendar');
 
-    async function loadEvents() {
-      const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pub?output=csv');
-      const csv = await res.text();
+  async function loadEvents() {
+    const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vRq1zsQ8krn9aflClnTqSxI_Nsw866lq6pVdehvJAocW4hGISGPRR7BTOSBNConlCZ-UiaTnnUKMEbU/pub?output=csv');
+    const csv = await res.text();
 
-      const rows = csv.split('\n').map(r =>
-        r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g,'').trim())
-      );
+    const rows = csv.split('\n').map(r =>
+      r.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g,'').trim())
+    );
 
-      const header = rows[0];
-      const dataRows = rows.slice(1);
-      const events = [];
+    const header = rows[0];
+    const dataRows = rows.slice(1);
+    const events = [];
 
-      const idxName = header.indexOf('姓名');
-      const idxStart = header.indexOf('休假日期'); // 這裡可改成開始日期欄位
-      const idxEnd = header.indexOf('休假結束日');
-      const idxType = header.indexOf('假別');
-      const idxNote = header.indexOf('備註');
+    const idxName = header.indexOf('姓名');
+    const idxStart = header.indexOf('休假開始日'); // 修正欄位名稱
+    const idxEnd = header.indexOf('休假結束日');
+    const idxType = header.indexOf('假別');
+    const idxNote = header.indexOf('備註');
 
-      dataRows.forEach(r => {
-        if(!r || !r[idxStart]) return;
-        const name = r[idxName];
-        const type = r[idxType] || '';
-        const note = r[idxNote] || '';
+    dataRows.forEach(r => {
+      if(!r || !r[idxStart]) return;
 
-        const startDate = new Date(r[idxStart]);
-        const endDate = new Date(r[idxEnd] || r[idxStart]);
+      const name = r[idxName];
+      const type = r[idxType] || '';
+      const note = r[idxNote] || '';
+      const startDate = new Date(r[idxStart]);
+      const endDate = new Date(r[idxEnd] || r[idxStart]);
 
-        for(let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-          let color = '#6366f1';
-          if(type.includes('特休')) color = '#22c55e';
-          else if(type.includes('事假')) color = '#f59e0b';
-          else if(type.includes('病假')) color = '#ef4444';
+      for(let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        let color = '#6366f1';
+        if(type.includes('特休')) color = '#22c55e';
+        else if(type.includes('事假')) color = '#f59e0b';
+        else if(type.includes('病假')) color = '#ef4444';
 
-          const eventDate = new Date(d);
-          events.push({
-            title: `${name}（${type}）`,
-            start: eventDate.toISOString().split('T')[0],
-            allDay:true,
-            color,
-            extendedProps: {note}
-          });
+        const eventDate = new Date(d);
+        events.push({
+          title: `${name}（${type}）`,
+          start: eventDate.toISOString().split('T')[0],
+          allDay:true,
+          color,
+          extendedProps: {note}
+        });
+      }
+    });
+
+    return events;
+  }
+
+  async function initCalendar() {
+    const events = await loadEvents();
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView:'dayGridMonth',
+      locale:'zh-tw',
+      height:'auto',
+      headerToolbar: {left:'prev,next today',center:'title',right:'dayGridMonth,listMonth'},
+      events,
+      eventClick(info){
+        if(info.event.extendedProps.note){
+          alert('備註：'+info.event.extendedProps.note);
         }
-      });
+      }
+    });
+    calendar.render();
+  }
 
-      return events;
-    }
+  // 設為全域，方便表單送出後呼叫刷新
+  window.initCalendar = initCalendar;
 
-    async function initCalendar() {
-      const events = await loadEvents();
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView:'dayGridMonth',
-        locale:'zh-tw',
-        height:'auto',
-        headerToolbar: {left:'prev,next today',center:'title',right:'dayGridMonth,listMonth'},
-        events,
-        eventClick(info){
-          if(info.event.extendedProps.note){
-            alert('備註：'+info.event.extendedProps.note);
-          }
-        }
-      });
-      calendar.render();
-    }
-
-    initCalendar();
-  });
+  initCalendar();
   </script>
 </body>
 </html>
